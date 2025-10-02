@@ -32,7 +32,7 @@ class HTMLTemplates:
             font-family: 'ZCOOL KuaiLe', 'Ma Shan Zheng', 'Noto Sans SC', sans-serif;
             min-height: 100vh;
             margin: 0;
-            background: url('白猫心路.png') repeat;
+            background: url('https://i0.hdslb.com/bfs/archive/36e5424340898f2ac82a2b82d489af130da6b93a.jpg') repeat;
             background-size: auto;
             position: relative;
             line-height: 1.6;
@@ -370,8 +370,8 @@ class HTMLTemplates:
         .hour-label {
             width: 3.5vw;
             text-align: right;
-            color: #ff85c0;
-            font-size: clamp(0.7rem, 1.1vh, 0.85rem);
+            color: #ff9ec7;
+            font-size: clamp(0.6rem, 0.9vh, 0.75rem);
             font-weight: 400;
             flex-shrink: 0;
             text-shadow: none;
@@ -392,12 +392,33 @@ class HTMLTemplates:
         }
 
         .bar-value {
-            color: #ff69b4;
-            font-size: clamp(0.65rem, 1vh, 0.8rem);
-            font-weight: 500;
+            color: #ff9ec7;
+            font-size: clamp(0.6rem, 0.9vh, 0.75rem);
+            font-weight: 400;
             min-width: 2vw;
             text-align: right;
             flex-shrink: 0;
+            text-shadow: none;
+        }
+
+        .hour-bar-container {
+            display: flex;
+            align-items: center;
+            margin: 0.3vh 0;
+        }
+
+        .hourly-value-inside {
+            color: white;
+            font-size: clamp(0.55rem, 0.85vh, 0.7rem);
+            font-weight: 400;
+            padding: 0 0.5vw;
+            text-shadow: none;
+        }
+
+        .hourly-value-outside {
+            color: #ff9ec7;
+            font-size: clamp(0.55rem, 0.85vh, 0.7rem);
+            font-weight: 400;
             text-shadow: none;
         }
 
