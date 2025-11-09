@@ -9,22 +9,24 @@ from astrbot.api import logger
 import aiohttp
 
 
-def get_provider_with_fallback(context, config_manager, provider_id_key: str, umo: str = None) -> Optional[Any]:
+def get_provider_with_fallback(
+    context, config_manager, provider_id_key: str, umo: str = None
+) -> Optional[Any]:
     """
     根据配置键获取 Provider，支持多级回退
-    
+
     回退顺序：
     1. 尝试从配置获取指定的 provider_id（如 topic_provider_id）
     2. 回退到主 LLM provider_id（llm_provider_id）
     3. 回退到当前会话的 Provider（通过 umo）
     4. 回退到第一个可用的 Provider
-    
+
     Args:
         context: AstrBot上下文对象
         config_manager: 配置管理器
         provider_id_key: 配置中的 provider_id 键名（如 'topic_provider_id'）
         umo: unified_msg_origin，用于获取会话默认 Provider
-        
+
     Returns:
         Provider 实例或 None
     """
@@ -35,17 +37,28 @@ def get_provider_with_fallback(context, config_manager, provider_id_key: str, um
             getter_method = f"get_{provider_id_key}"
             if hasattr(config_manager, getter_method):
                 specific_provider_id = getattr(config_manager, getter_method)()
-                if isinstance(specific_provider_id, str) and specific_provider_id.strip():
+                if (
+                    isinstance(specific_provider_id, str)
+                    and specific_provider_id.strip()
+                ):
                     specific_provider_id = specific_provider_id.strip()
-                    logger.info(f"尝试使用配置的 {provider_id_key}: {specific_provider_id}")
+                    logger.info(
+                        f"尝试使用配置的 {provider_id_key}: {specific_provider_id}"
+                    )
                     try:
-                        provider = context.get_provider_by_id(provider_id=specific_provider_id)
+                        provider = context.get_provider_by_id(
+                            provider_id=specific_provider_id
+                        )
                         if provider:
-                            logger.info(f"✓ 使用配置的特定 Provider: {specific_provider_id}")
+                            logger.info(
+                                f"✓ 使用配置的特定 Provider: {specific_provider_id}"
+                            )
                             return provider
                     except Exception as e:
-                        logger.warning(f"无法找到配置的 Provider ID '{specific_provider_id}': {e}")
-        
+                        logger.warning(
+                            f"无法找到配置的 Provider ID '{specific_provider_id}': {e}"
+                        )
+
         # 2. 回退到主 LLM provider_id
         main_provider_id = config_manager.get_llm_provider_id()
         if isinstance(main_provider_id, str) and main_provider_id.strip():
@@ -58,7 +71,7 @@ def get_provider_with_fallback(context, config_manager, provider_id_key: str, um
                     return provider
             except Exception as e:
                 logger.warning(f"无法找到主 LLM Provider ID '{main_provider_id}': {e}")
-        
+
         # 3. 回退到当前会话的 Provider
         try:
             provider = context.get_using_provider(umo=umo)
@@ -72,7 +85,7 @@ def get_provider_with_fallback(context, config_manager, provider_id_key: str, um
                 return provider
         except Exception as e:
             logger.warning(f"无法获取会话 Provider: {e}")
-        
+
         # 4. 最后回退：使用第一个可用的 Provider
         try:
             all_providers = context.get_all_providers()
@@ -82,10 +95,10 @@ def get_provider_with_fallback(context, config_manager, provider_id_key: str, um
                 return provider
         except Exception as e:
             logger.warning(f"无法获取任何 Provider: {e}")
-        
+
     except Exception as e:
         logger.error(f"Provider 选择过程出错: {e}")
-    
+
     return None
 
 
@@ -124,7 +137,7 @@ async def call_provider_with_retry(
             provider = get_provider_with_fallback(
                 context, config_manager, provider_id_key, umo
             )
-            
+
             provider_id = "unknown"
             if provider:
                 try:
@@ -132,7 +145,7 @@ async def call_provider_with_retry(
                     provider_id = meta.id
                 except Exception as e:
                     logger.debug(f"获取提供商ID失败: {e}")
-            
+
             if not provider:
                 logger.error("provider 为空，无法调用 text_chat，直接返回 None")
                 return None
@@ -141,9 +154,7 @@ async def call_provider_with_retry(
                 f"使用LLM provider (ID: {provider_id}), max_tokens={max_tokens}, temperature={temperature}"
             )
 
-            logger.debug(
-                f"LLM provider prompt 长度: {len(prompt) if prompt else 0}"
-            )
+            logger.debug(f"LLM provider prompt 长度: {len(prompt) if prompt else 0}")
             logger.debug(
                 f"LLM provider prompt 前100字符: {prompt[:100] if prompt else 'None'}..."
             )

@@ -36,7 +36,7 @@ class BaseAnalyzer(ABC):
         """
         获取 Provider ID 配置键名
         子类可重写以指定特定的 provider，默认返回 None（使用主 LLM Provider）
-        
+
         Returns:
             Provider ID 配置键名，如 'topic_provider_id'
         """
@@ -150,7 +150,7 @@ class BaseAnalyzer(ABC):
                 max_tokens,
                 temperature,
                 umo,
-                provider_id_key
+                provider_id_key,
             )
 
             if response is None:
