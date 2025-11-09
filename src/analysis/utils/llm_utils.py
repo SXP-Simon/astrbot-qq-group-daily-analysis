@@ -9,6 +9,82 @@ from astrbot.api import logger
 import aiohttp
 
 
+def _try_get_provider_by_id(
+    context, provider_id: str, description: str
+) -> Optional[Any]:
+    """
+    尝试通过 ID 获取 Provider 的辅助函数
+
+    Args:
+        context: AstrBot上下文对象
+        provider_id: Provider ID
+        description: 描述信息，用于日志
+
+    Returns:
+        Provider 实例或 None
+    """
+    if not provider_id or not isinstance(provider_id, str) or not provider_id.strip():
+        return None
+
+    provider_id = provider_id.strip()
+    logger.info(f"尝试使用{description}: {provider_id}")
+    try:
+        provider = context.get_provider_by_id(provider_id=provider_id)
+        if provider:
+            logger.info(f"✓ 使用{description}: {provider_id}")
+            return provider
+    except Exception as e:
+        logger.warning(f"无法找到{description} '{provider_id}': {e}")
+    return None
+
+
+def _try_get_session_provider(context, umo: str) -> Optional[Any]:
+    """
+    尝试获取会话 Provider 的辅助函数
+
+    Args:
+        context: AstrBot上下文对象
+        umo: unified_msg_origin
+
+    Returns:
+        Provider 实例或 None
+    """
+    try:
+        provider = context.get_using_provider(umo=umo)
+        if provider:
+            try:
+                meta = provider.meta()
+                provider_id = meta.id
+                logger.info(f"✓ 使用当前会话的 Provider: {provider_id}")
+            except Exception:
+                logger.info("✓ 使用当前会话的默认 Provider")
+            return provider
+    except Exception as e:
+        logger.warning(f"无法获取会话 Provider: {e}")
+    return None
+
+
+def _try_get_first_available_provider(context) -> Optional[Any]:
+    """
+    尝试获取第一个可用 Provider 的辅助函数
+
+    Args:
+        context: AstrBot上下文对象
+
+    Returns:
+        Provider 实例或 None
+    """
+    try:
+        all_providers = context.get_all_providers()
+        if all_providers and len(all_providers) > 0:
+            provider = all_providers[0]
+            logger.info(f"✓ 使用第一个可用 Provider: {type(provider).__name__}")
+            return provider
+    except Exception as e:
+        logger.warning(f"无法获取任何 Provider: {e}")
+    return None
+
+
 def get_provider_with_fallback(
     context, config_manager, provider_id_key: str, umo: str = None
 ) -> Optional[Any]:
@@ -31,75 +107,48 @@ def get_provider_with_fallback(
         Provider 实例或 None
     """
     try:
-        # 1. 尝试从配置获取特定任务的 provider_id
-        specific_provider_id = None
+        # 定义回退策略列表
+        strategies = []
+
+        # 1. 特定任务的 provider_id
         if provider_id_key:
             getter_method = f"get_{provider_id_key}"
             if hasattr(config_manager, getter_method):
                 specific_provider_id = getattr(config_manager, getter_method)()
-                if (
-                    isinstance(specific_provider_id, str)
-                    and specific_provider_id.strip()
-                ):
-                    specific_provider_id = specific_provider_id.strip()
-                    logger.info(
-                        f"尝试使用配置的 {provider_id_key}: {specific_provider_id}"
+                if specific_provider_id:
+                    strategies.append(
+                        lambda pid=specific_provider_id: _try_get_provider_by_id(
+                            context, pid, f"配置的 {provider_id_key}"
+                        )
                     )
-                    try:
-                        provider = context.get_provider_by_id(
-                            provider_id=specific_provider_id
-                        )
-                        if provider:
-                            logger.info(
-                                f"✓ 使用配置的特定 Provider: {specific_provider_id}"
-                            )
-                            return provider
-                    except Exception as e:
-                        logger.warning(
-                            f"无法找到配置的 Provider ID '{specific_provider_id}': {e}"
-                        )
 
-        # 2. 回退到主 LLM provider_id
+        # 2. 主 LLM provider_id
         main_provider_id = config_manager.get_llm_provider_id()
-        if isinstance(main_provider_id, str) and main_provider_id.strip():
-            main_provider_id = main_provider_id.strip()
-            logger.info(f"尝试使用主 LLM Provider: {main_provider_id}")
-            try:
-                provider = context.get_provider_by_id(provider_id=main_provider_id)
-                if provider:
-                    logger.info(f"✓ 使用主 LLM Provider: {main_provider_id}")
-                    return provider
-            except Exception as e:
-                logger.warning(f"无法找到主 LLM Provider ID '{main_provider_id}': {e}")
+        if main_provider_id:
+            strategies.append(
+                lambda pid=main_provider_id: _try_get_provider_by_id(
+                    context, pid, "主 LLM Provider"
+                )
+            )
 
-        # 3. 回退到当前会话的 Provider
-        try:
-            provider = context.get_using_provider(umo=umo)
+        # 3. 当前会话的 Provider
+        strategies.append(lambda: _try_get_session_provider(context, umo))
+
+        # 4. 第一个可用的 Provider
+        strategies.append(lambda: _try_get_first_available_provider(context))
+
+        # 依次尝试每个策略
+        for strategy in strategies:
+            provider = strategy()
             if provider:
-                try:
-                    meta = provider.meta()
-                    provider_id = meta.id
-                    logger.info(f"✓ 使用当前会话的 Provider: {provider_id}")
-                except Exception:
-                    logger.info("✓ 使用当前会话的默认 Provider")
                 return provider
-        except Exception as e:
-            logger.warning(f"无法获取会话 Provider: {e}")
 
-        # 4. 最后回退：使用第一个可用的 Provider
-        try:
-            all_providers = context.get_all_providers()
-            if all_providers and len(all_providers) > 0:
-                provider = all_providers[0]
-                logger.info(f"✓ 使用第一个可用 Provider: {type(provider).__name__}")
-                return provider
-        except Exception as e:
-            logger.warning(f"无法获取任何 Provider: {e}")
+        logger.error("所有 Provider 获取策略均失败")
+        return None
 
     except Exception as e:
         logger.error(f"Provider 选择过程出错: {e}")
-
-    return None
+        return None
 
 
 async def call_provider_with_retry(
