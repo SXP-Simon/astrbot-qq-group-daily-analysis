@@ -69,10 +69,6 @@ class ConfigManager:
         """获取最大金句数量"""
         return self.config.get("max_golden_quotes", 5)
 
-    def get_max_query_rounds(self) -> int:
-        """获取最大查询轮数"""
-        return self.config.get("max_query_rounds", 35)
-
     def get_llm_timeout(self) -> int:
         """获取LLM请求超时时间（秒）"""
         return self.config.get("llm_timeout", 30)
@@ -262,11 +258,6 @@ class ConfigManager:
     def set_max_golden_quotes(self, count: int):
         """设置最大金句数量"""
         self.config["max_golden_quotes"] = count
-        self.config.save_config()
-
-    def set_max_query_rounds(self, rounds: int):
-        """设置最大查询轮数"""
-        self.config["max_query_rounds"] = rounds
         self.config.save_config()
 
     def set_pdf_output_dir(self, directory: str):
