@@ -105,6 +105,22 @@ class ConfigManager:
         """获取自定义 LLM 服务的模型名称"""
         return self.config.get("custom_model_name", "")
 
+    def get_llm_provider_id(self) -> str:
+        """获取主 LLM Provider ID"""
+        return self.config.get("llm_provider_id", "")
+
+    def get_topic_provider_id(self) -> str:
+        """获取话题分析专用 Provider ID"""
+        return self.config.get("topic_provider_id", "")
+
+    def get_user_title_provider_id(self) -> str:
+        """获取用户称号分析专用 Provider ID"""
+        return self.config.get("user_title_provider_id", "")
+
+    def get_golden_quote_provider_id(self) -> str:
+        """获取金句分析专用 Provider ID"""
+        return self.config.get("golden_quote_provider_id", "")
+
     def get_pdf_output_dir(self) -> str:
         """获取PDF输出目录"""
         return self.config.get(

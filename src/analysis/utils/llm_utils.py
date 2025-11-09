@@ -9,6 +9,86 @@ from astrbot.api import logger
 import aiohttp
 
 
+def get_provider_with_fallback(context, config_manager, provider_id_key: str, umo: str = None) -> Optional[Any]:
+    """
+    根据配置键获取 Provider，支持多级回退
+    
+    回退顺序：
+    1. 尝试从配置获取指定的 provider_id（如 topic_provider_id）
+    2. 回退到主 LLM provider_id（llm_provider_id）
+    3. 回退到当前会话的 Provider（通过 umo）
+    4. 回退到第一个可用的 Provider
+    
+    Args:
+        context: AstrBot上下文对象
+        config_manager: 配置管理器
+        provider_id_key: 配置中的 provider_id 键名（如 'topic_provider_id'）
+        umo: unified_msg_origin，用于获取会话默认 Provider
+        
+    Returns:
+        Provider 实例或 None
+    """
+    try:
+        # 1. 尝试从配置获取特定任务的 provider_id
+        specific_provider_id = None
+        if provider_id_key:
+            getter_method = f"get_{provider_id_key}"
+            if hasattr(config_manager, getter_method):
+                specific_provider_id = getattr(config_manager, getter_method)()
+                if isinstance(specific_provider_id, str) and specific_provider_id.strip():
+                    specific_provider_id = specific_provider_id.strip()
+                    logger.info(f"尝试使用配置的 {provider_id_key}: {specific_provider_id}")
+                    try:
+                        provider = context.get_provider_by_id(provider_id=specific_provider_id)
+                        if provider:
+                            logger.info(f"✓ 使用配置的特定 Provider: {specific_provider_id}")
+                            return provider
+                    except Exception as e:
+                        logger.warning(f"无法找到配置的 Provider ID '{specific_provider_id}': {e}")
+        
+        # 2. 回退到主 LLM provider_id
+        main_provider_id = config_manager.get_llm_provider_id()
+        if isinstance(main_provider_id, str) and main_provider_id.strip():
+            main_provider_id = main_provider_id.strip()
+            logger.info(f"尝试使用主 LLM Provider: {main_provider_id}")
+            try:
+                provider = context.get_provider_by_id(provider_id=main_provider_id)
+                if provider:
+                    logger.info(f"✓ 使用主 LLM Provider: {main_provider_id}")
+                    return provider
+            except Exception as e:
+                logger.warning(f"无法找到主 LLM Provider ID '{main_provider_id}': {e}")
+        
+        # 3. 回退到当前会话的 Provider
+        try:
+            provider = context.get_using_provider(umo=umo)
+            if provider:
+                try:
+                    meta = provider.meta()
+                    provider_id = meta.id
+                    logger.info(f"✓ 使用当前会话的 Provider: {provider_id}")
+                except Exception:
+                    logger.info("✓ 使用当前会话的默认 Provider")
+                return provider
+        except Exception as e:
+            logger.warning(f"无法获取会话 Provider: {e}")
+        
+        # 4. 最后回退：使用第一个可用的 Provider
+        try:
+            all_providers = context.get_all_providers()
+            if all_providers and len(all_providers) > 0:
+                provider = all_providers[0]
+                logger.info(f"✓ 使用第一个可用 Provider: {type(provider).__name__}")
+                return provider
+        except Exception as e:
+            logger.warning(f"无法获取任何 Provider: {e}")
+        
+    except Exception as e:
+        logger.error(f"Provider 选择过程出错: {e}")
+    
+    return None
+
+
 async def call_provider_with_retry(
     context,
     config_manager,
@@ -16,9 +96,10 @@ async def call_provider_with_retry(
     max_tokens: int,
     temperature: float,
     umo: str = None,
+    provider_id_key: str = None,
 ) -> Optional[Any]:
     """
-    调用LLM提供者，带超时、重试与退避。支持自定义服务商。
+    调用LLM提供者，带超时、重试与退避。支持自定义服务商和配置化 Provider 选择。
 
     Args:
         context: AstrBot上下文对象
@@ -27,6 +108,7 @@ async def call_provider_with_retry(
         max_tokens: 最大生成token数
         temperature: 采样温度
         umo: 指定使用的模型唯一标识符
+        provider_id_key: 配置中的 provider_id 键名（如 'topic_provider_id'），用于选择特定的 Provider
 
     Returns:
         LLM生成的结果，失败时返回None
@@ -120,8 +202,11 @@ async def call_provider_with_retry(
 
                         return CustomResponse()
             else:
-                # 确保使用当前指定的模型
-                provider = context.get_using_provider(umo=umo)
+                # 使用新的 provider 选择逻辑，支持配置化选择和多级回退
+                provider = get_provider_with_fallback(
+                    context, config_manager, provider_id_key, umo
+                )
+                
                 provider_id = "unknown"
                 if provider:
                     try:
@@ -129,16 +214,14 @@ async def call_provider_with_retry(
                         provider_id = meta.id
                     except Exception as e:
                         logger.debug(f"获取提供商ID失败: {e}")
-                logger.info(f"获取到的 provider ID: {provider_id}")
-                if not provider or provider_id == "unknown":
-                    logger.warning(f"获取的提供商不正确 (Provider ID: {provider_id})")
-
-                logger.info(
-                    f"使用LLM provider: {provider}, max_tokens={max_tokens}, temperature={temperature}"
-                )
+                
                 if not provider:
                     logger.error("provider 为空，无法调用 text_chat，直接返回 None")
                     return None
+
+                logger.info(
+                    f"使用LLM provider (ID: {provider_id}), max_tokens={max_tokens}, temperature={temperature}"
+                )
 
                 logger.debug(
                     f"LLM provider prompt 长度: {len(prompt) if prompt else 0}"
