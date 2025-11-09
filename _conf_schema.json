@@ -157,24 +157,6 @@
         "default": "",
         "hint": "专门用于金句分析的 Provider。留空则使用主 LLM Provider"
     },
-    "custom_api_key": {
-        "type": "string",
-        "description": "自定义 LLM 服务 API Key (选填，不推荐)",
-        "default": "",
-        "hint": "若使用自建或第三方的 LLM 服务，可在此填写 API Key；留空则使用 Astrbot 统一内置提供商。推荐使用上面的 Provider 选择功能。"
-    },
-    "custom_api_base_url": {
-        "type": "string",
-        "description": "自定义 LLM 服务 Base URL (选填，不推荐)",
-        "default": "",
-        "hint": "自定义 LLM 服务的基础请求地址，例如 https://openrouter.ai/api/v1/chat/completions 。留空则使用 Astrbot 统一内置提供商。推荐使用上面的 Provider 选择功能。"
-    },
-    "custom_model_name": {
-        "type": "string",
-        "description": "自定义 LLM 模型名称 (选填，不推荐)",
-        "default": "",
-        "hint": "自定义服务所使用的模型名称，例如 gpt-4 、deepseek/deepseek-r1:free 或自定义模型标识，由于自定义情况复杂，无法给出有效的参数参考，需要根据实际情况例如日志报错判断。留空则使用 Astrbot 统一内置提供商。推荐使用上面的 Provider 选择功能。"
-    },
     "pdf_output_dir": {
         "type": "string",
         "description": "PDF输出目录",

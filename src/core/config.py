@@ -93,18 +93,6 @@ class ConfigManager:
         """获取用户称号分析最大token数"""
         return self.config.get("user_title_max_tokens", 4096)
 
-    def get_custom_api_key(self) -> str:
-        """获取自定义 LLM 服务的 API Key"""
-        return self.config.get("custom_api_key", "")
-
-    def get_custom_api_base_url(self) -> str:
-        """获取自定义 LLM 服务的 Base URL"""
-        return self.config.get("custom_api_base_url", "")
-
-    def get_custom_model_name(self) -> str:
-        """获取自定义 LLM 服务的模型名称"""
-        return self.config.get("custom_model_name", "")
-
     def get_llm_provider_id(self) -> str:
         """获取主 LLM Provider ID"""
         return self.config.get("llm_provider_id", "")

@@ -117,130 +117,48 @@ async def call_provider_with_retry(
     retries = config_manager.get_llm_retries()
     backoff = config_manager.get_llm_backoff()
 
-    # 获取自定义服务商参数
-    custom_api_key = config_manager.get_custom_api_key()
-    custom_api_base = config_manager.get_custom_api_base_url()
-    custom_model = config_manager.get_custom_model_name()
-
     last_exc = None
     for attempt in range(1, retries + 1):
         try:
-            if custom_api_key and custom_api_base and custom_model:
-                logger.info(
-                    f"使用自定义LLM提供商: {custom_api_base} model={custom_model}, max_tokens={max_tokens}, temperature={temperature}"
-                )
-                logger.debug(
-                    f"自定义LLM提供商 prompt 长度: {len(prompt) if prompt else 0}"
-                )
-                logger.debug(
-                    f"自定义LLM提供商 prompt 前100字符: {prompt[:100] if prompt else 'None'}..."
-                )
+            # 使用新的 provider 选择逻辑，支持配置化选择和多级回退
+            provider = get_provider_with_fallback(
+                context, config_manager, provider_id_key, umo
+            )
+            
+            provider_id = "unknown"
+            if provider:
+                try:
+                    meta = provider.meta()
+                    provider_id = meta.id
+                except Exception as e:
+                    logger.debug(f"获取提供商ID失败: {e}")
+            
+            if not provider:
+                logger.error("provider 为空，无法调用 text_chat，直接返回 None")
+                return None
 
-                # 检查 prompt 是否为空
-                if not prompt or not prompt.strip():
-                    logger.error(
-                        "自定义LLM提供商: prompt 为空或只包含空白字符，无法发送请求"
-                    )
-                    return None
+            logger.info(
+                f"使用LLM provider (ID: {provider_id}), max_tokens={max_tokens}, temperature={temperature}"
+            )
 
-                async with aiohttp.ClientSession() as session:
-                    headers = {
-                        "Authorization": f"Bearer {custom_api_key}",
-                        "Content-Type": "application/json",
-                    }
-                    payload = {
-                        "model": custom_model,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "max_tokens": max_tokens,
-                        "temperature": temperature,
-                    }
-                    aio_timeout = aiohttp.ClientTimeout(total=timeout)
-                    async with session.post(
-                        custom_api_base,
-                        json=payload,
-                        headers=headers,
-                        timeout=aio_timeout,
-                    ) as resp:
-                        if resp.status != 200:
-                            error_text = await resp.text()
-                            logger.error(
-                                f"自定义LLM服务商请求失败: HTTP {resp.status}, 内容: {error_text}"
-                            )
-                        try:
-                            response_json = await resp.json()
-                        except Exception as json_err:
-                            error_text = await resp.text()
-                            logger.error(
-                                f"自定义LLM服务商响应JSON解析失败: {json_err}, 内容: {error_text}"
-                            )
-                            return None
-                        # 兼容 OpenAI 格式，安全访问嵌套字段
-                        content = None
-                        try:
-                            choices = response_json.get("choices")
-                            if (
-                                choices
-                                and isinstance(choices, list)
-                                and len(choices) > 0
-                            ):
-                                message = choices[0].get("message")
-                                if message and isinstance(message, dict):
-                                    content = message.get("content")
-                            if content is None:
-                                logger.error(f"自定义LLM响应格式异常: {response_json}")
-                                return None
-                        except Exception as key_err:
-                            logger.error(
-                                f"自定义LLM响应结构解析失败: {key_err}, 响应内容: {response_json}"
-                            )
-                            return None
+            logger.debug(
+                f"LLM provider prompt 长度: {len(prompt) if prompt else 0}"
+            )
+            logger.debug(
+                f"LLM provider prompt 前100字符: {prompt[:100] if prompt else 'None'}..."
+            )
 
-                        # 构造一个兼容原有逻辑的对象
-                        class CustomResponse:
-                            completion_text = content
-                            raw_completion = response_json
-
-                        return CustomResponse()
-            else:
-                # 使用新的 provider 选择逻辑，支持配置化选择和多级回退
-                provider = get_provider_with_fallback(
-                    context, config_manager, provider_id_key, umo
+            # 检查 prompt 是否为空
+            if not prompt or not prompt.strip():
+                logger.error(
+                    "LLM provider: prompt 为空或只包含空白字符，无法调用 text_chat"
                 )
-                
-                provider_id = "unknown"
-                if provider:
-                    try:
-                        meta = provider.meta()
-                        provider_id = meta.id
-                    except Exception as e:
-                        logger.debug(f"获取提供商ID失败: {e}")
-                
-                if not provider:
-                    logger.error("provider 为空，无法调用 text_chat，直接返回 None")
-                    return None
+                return None
 
-                logger.info(
-                    f"使用LLM provider (ID: {provider_id}), max_tokens={max_tokens}, temperature={temperature}"
-                )
-
-                logger.debug(
-                    f"LLM provider prompt 长度: {len(prompt) if prompt else 0}"
-                )
-                logger.debug(
-                    f"LLM provider prompt 前100字符: {prompt[:100] if prompt else 'None'}..."
-                )
-
-                # 检查 prompt 是否为空
-                if not prompt or not prompt.strip():
-                    logger.error(
-                        "LLM provider: prompt 为空或只包含空白字符，无法调用 text_chat"
-                    )
-                    return None
-
-                coro = provider.text_chat(
-                    prompt=prompt, max_tokens=max_tokens, temperature=temperature
-                )
-                return await asyncio.wait_for(coro, timeout=timeout)
+            coro = provider.text_chat(
+                prompt=prompt, max_tokens=max_tokens, temperature=temperature
+            )
+            return await asyncio.wait_for(coro, timeout=timeout)
         except asyncio.TimeoutError as e:
             last_exc = e
             logger.warning(f"LLM请求超时: 第{attempt}次, timeout={timeout}s")
