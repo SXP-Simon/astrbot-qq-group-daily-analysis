@@ -107,8 +107,13 @@ def get_provider_with_fallback(
         Provider 实例或 None
     """
     try:
+        # 输出Provider选择开始日志
+        task_desc = provider_id_key if provider_id_key else "默认任务"
+        logger.info(f"[Provider 选择] 开始为 {task_desc} 选择 Provider...")
+
         # 定义回退策略列表
         strategies = []
+        strategy_names = []
 
         # 1. 特定任务的 provider_id
         if provider_id_key:
@@ -121,6 +126,7 @@ def get_provider_with_fallback(
                             context, pid, f"配置的 {provider_id_key}"
                         )
                     )
+                    strategy_names.append(f"1. 配置的 {provider_id_key}")
 
         # 2. 主 LLM provider_id
         main_provider_id = config_manager.get_llm_provider_id()
@@ -130,24 +136,41 @@ def get_provider_with_fallback(
                     context, pid, "主 LLM Provider"
                 )
             )
+            strategy_names.append("2. 主 LLM Provider")
 
         # 3. 当前会话的 Provider
         strategies.append(lambda: _try_get_session_provider(context, umo))
+        strategy_names.append("3. 当前会话 Provider")
 
         # 4. 第一个可用的 Provider
         strategies.append(lambda: _try_get_first_available_provider(context))
+        strategy_names.append("4. 第一个可用 Provider")
+
+        # 输出回退策略列表
+        logger.info(f"[Provider 选择] 回退策略顺序：{' -> '.join(strategy_names)}")
 
         # 依次尝试每个策略
-        for strategy in strategies:
+        for idx, strategy in enumerate(strategies):
             provider = strategy()
             if provider:
+                # 获取最终的 provider ID 用于日志
+                final_provider_id = "unknown"
+                try:
+                    meta = provider.meta()
+                    final_provider_id = meta.id
+                except Exception:
+                    final_provider_id = type(provider).__name__
+
+                logger.info(
+                    f"[Provider 选择] ✓ 成功！使用策略 #{idx + 1}，Provider ID: {final_provider_id}"
+                )
                 return provider
 
-        logger.error("所有 Provider 获取策略均失败")
+        logger.error("[Provider 选择] ✗ 失败：所有回退策略均无法获取可用 Provider")
         return None
 
     except Exception as e:
-        logger.error(f"Provider 选择过程出错: {e}")
+        logger.error(f"[Provider 选择] ✗ 异常：Provider 选择过程出错: {e}")
         return None
 
 
@@ -200,12 +223,13 @@ async def call_provider_with_retry(
                 return None
 
             logger.info(
-                f"使用LLM provider (ID: {provider_id}), max_tokens={max_tokens}, temperature={temperature}"
+                f"[LLM 调用] 使用 Provider: {provider_id} | "
+                f"max_tokens={max_tokens} | temperature={temperature} | "
+                f"prompt长度={len(prompt) if prompt else 0}字符"
             )
 
-            logger.debug(f"LLM provider prompt 长度: {len(prompt) if prompt else 0}")
             logger.debug(
-                f"LLM provider prompt 前100字符: {prompt[:100] if prompt else 'None'}..."
+                f"[LLM 调用] Prompt 前100字符: {prompt[:100] if prompt else 'None'}..."
             )
 
             # 检查 prompt 是否为空
