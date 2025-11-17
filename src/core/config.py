@@ -17,8 +17,55 @@ class ConfigManager:
         self._pyppeteer_version = None
         self._check_pyppeteer_availability()
 
-    def get_enabled_groups(self) -> List[str]:
-        """获取启用的群组列表"""
+    def get_group_list_mode(self) -> str:
+        """获取群聊权限模式"""
+        mode = self.config.get("group_list_mode", "none")
+        if mode not in ("whitelist", "blacklist", "none"):
+            return "none"
+        return mode
+
+    def get_group_list(self) -> list:
+        """获取群号列表"""
+        group_list = self.config.get("group_list", [])
+        # 兼容字符串格式（逗号/空白/中文逗号/顿号分隔）
+        if isinstance(group_list, str) and group_list.strip():
+            import re
+            return [x.strip() for x in re.split(r"[\s,，、]+", group_list) if x.strip()]
+        return [str(x).strip() for x in group_list if x]
+
+    def is_group_allowed(self, group_id: str) -> bool:
+        """检查群组是否允许使用插件功能
+        
+        Args:
+            group_id: 群号
+            
+        Returns:
+            bool: 是否允许使用
+        """
+        if not group_id:
+            return True  # 非群聊或无法识别，放行
+        
+        mode = self.get_group_list_mode()
+        group_list = self.get_group_list()
+        group_id_str = str(group_id).strip()
+        
+        if mode == "whitelist":
+            # 白名单模式：仅允许列表内的群
+            return group_id_str in group_list if group_list else False
+        elif mode == "blacklist":
+            # 黑名单模式：拒绝列表内的群
+            return group_id_str not in group_list if group_list else True
+        else:
+            # none 模式：不限制
+            return True
+
+    def get_enabled_groups(self) -> list:
+        """获取启用的群组列表（已弃用，仅为兼容性保留）"""
+        # 优先使用新的白黑名单机制
+        mode = self.get_group_list_mode()
+        if mode == "whitelist":
+            return self.get_group_list()
+        # 回退到旧配置
         return self.config.get("enabled_groups", [])
 
     def get_max_messages(self) -> int:
@@ -275,20 +322,44 @@ class ConfigManager:
         self.config.save_config()
 
     def add_enabled_group(self, group_id: str):
-        """添加启用的群组"""
-        enabled_groups = self.get_enabled_groups()
-        if group_id not in enabled_groups:
-            enabled_groups.append(group_id)
-            self.config["enabled_groups"] = enabled_groups
-            self.config.save_config()
+        """添加启用的群组（添加到白名单或从黑名单移除）"""
+        mode = self.get_group_list_mode()
+        group_list = self.get_group_list()
+        group_id_str = str(group_id).strip()
+        
+        if mode == "whitelist":
+            # 白名单模式：添加到列表
+            if group_id_str not in group_list:
+                group_list.append(group_id_str)
+                self.config["group_list"] = group_list
+                self.config.save_config()
+        elif mode == "blacklist":
+            # 黑名单模式：从列表移除
+            if group_id_str in group_list:
+                group_list.remove(group_id_str)
+                self.config["group_list"] = group_list
+                self.config.save_config()
+        # none 模式不需要操作
 
     def remove_enabled_group(self, group_id: str):
-        """移除启用的群组"""
-        enabled_groups = self.get_enabled_groups()
-        if group_id in enabled_groups:
-            enabled_groups.remove(group_id)
-            self.config["enabled_groups"] = enabled_groups
-            self.config.save_config()
+        """移除启用的群组（从白名单移除或添加到黑名单）"""
+        mode = self.get_group_list_mode()
+        group_list = self.get_group_list()
+        group_id_str = str(group_id).strip()
+        
+        if mode == "whitelist":
+            # 白名单模式：从列表移除
+            if group_id_str in group_list:
+                group_list.remove(group_id_str)
+                self.config["group_list"] = group_list
+                self.config.save_config()
+        elif mode == "blacklist":
+            # 黑名单模式：添加到列表
+            if group_id_str not in group_list:
+                group_list.append(group_id_str)
+                self.config["group_list"] = group_list
+                self.config.save_config()
+        # none 模式不需要操作
 
     def get_enable_user_card(self) -> bool:
         """获取是否使用用户群名片"""

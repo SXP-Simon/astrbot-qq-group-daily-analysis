@@ -140,7 +140,16 @@ class AutoScheduler:
         try:
             logger.info("开始执行自动群聊分析（并发模式）")
 
+            # 获取允许分析的群聊列表
             enabled_groups = self.config_manager.get_enabled_groups()
+            
+            # 如果使用白名单模式且列表为空，则不执行分析
+            mode = self.config_manager.get_group_list_mode()
+            if mode == "whitelist" and not enabled_groups:
+                logger.info("白名单模式下没有启用的群聊需要分析")
+                return
+            
+            # 其他模式下如果没有配置群组，也不执行
             if not enabled_groups:
                 logger.info("没有启用的群聊需要分析")
                 return

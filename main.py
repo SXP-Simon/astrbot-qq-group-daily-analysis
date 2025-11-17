@@ -153,9 +153,8 @@ class QQGroupDailyAnalysis(Star):
         # 更新bot实例（用于手动命令）
         bot_manager.update_from_event(event)
 
-        # 检查群组权限
-        enabled_groups = config_manager.get_enabled_groups()
-        if enabled_groups and group_id not in enabled_groups:
+        # 检查群组权限（使用新的白黑名单机制）
+        if not config_manager.is_group_allowed(group_id):
             yield event.plain_result("❌ 此群未启用日常分析功能")
             return
 
