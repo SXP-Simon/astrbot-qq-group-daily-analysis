@@ -1,9 +1,25 @@
 {
+    "group_list_mode": {
+        "type": "string",
+        "description": "群聊权限模式",
+        "default": "none",
+        "hint": "whitelist: 仅允许列表内群；blacklist: 拒绝列表内群；none: 不限制",
+        "options": ["whitelist", "blacklist", "none"]
+    },
+    "group_list": {
+        "type": "list",
+        "description": "群号列表",
+        "default": [],
+        "hint": "仅在 whitelist/blacklist 模式下生效；留空等效于无限制",
+        "items": {
+            "type": "string"
+        }
+    },
     "enabled_groups": {
         "type": "list",
-        "description": "启用分析功能的QQ群列表",
+        "description": "启用分析功能的QQ群列表（已弃用，请使用 group_list_mode 和 group_list）",
         "default": [],
-        "hint": "填入允许使用分析功能的QQ群号",
+        "hint": "此配置项已弃用，建议使用新的白黑名单机制",
         "items": {
             "type": "string"
         }
