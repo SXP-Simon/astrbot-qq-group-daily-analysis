@@ -96,9 +96,9 @@ class ReportGenerator:
             render_data = await self._prepare_render_data(analysis_result)
             logger.info(f"PDF 渲染数据准备完成，包含 {len(render_data)} 个字段")
 
-            # 生成 HTML 内容（PDF模板使用{}占位符）
+            # 生成 HTML 内容（PDF模板使用{{}}占位符）
             html_content = self._render_html_template(
-                self.html_templates.get_pdf_template(), render_data, use_jinja_style=False
+                self.html_templates.get_pdf_template(), render_data, use_jinja_style=True
             )
             logger.info(f"HTML 内容生成完成，长度: {len(html_content)} 字符")
 
@@ -280,7 +280,7 @@ class ReportGenerator:
         Args:
             template: HTML模板字符串
             data: 渲染数据
-            use_jinja_style: 是否使用Jinja2风格的{{ }}占位符，否则使用{}占位符
+            use_jinja_style: 是否使用Jinja2风格的{{key}}占位符（已统一，此参数保留但不再使用）
         """
         result = template
 
@@ -290,13 +290,9 @@ class ReportGenerator:
         )
 
         for key, value in data.items():
-            if use_jinja_style:
-                # 图片模板使用{{ }}占位符
-                placeholder = f"{{{{ {key} }}}}"
-            else:
-                # PDF模板使用{}占位符
-                placeholder = f"{{{key}}}"
-
+            # 统一使用双大括号格式 {{key}}
+            placeholder = "{{" + key + "}}"
+            
             # 调试：记录替换过程
             if placeholder in result:
                 logger.debug(f"替换 {placeholder} -> {str(value)[:100]}...")
@@ -304,11 +300,8 @@ class ReportGenerator:
 
         # 检查是否还有未替换的占位符
         import re
-
-        if use_jinja_style:
-            remaining_placeholders = re.findall(r"\{\{[^}]+\}\}", result)
-        else:
-            remaining_placeholders = re.findall(r"\{[^}]+\}", result)
+        logger.info("正则替换占位符...")
+        remaining_placeholders = re.findall(r"\{\{[^}]+\}\}", result)
 
         if remaining_placeholders:
             logger.warning(f"未替换的占位符: {remaining_placeholders[:10]}")

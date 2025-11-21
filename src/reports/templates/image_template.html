@@ -536,19 +536,19 @@
     <div class="container">
         <div class="header">
             <h1>📊 群聊日常分析报告</h1>
-            <div class="date">{{ current_date }}</div>
+            <div class="date">{{current_date}}</div>
         </div>
         <div class="content">
             <div class="section full-width-section">
                 <h2 class="section-title">📈 基础统计</h2>
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number">{{ message_count }}</div><div class="stat-label">消息总数</div></div>
-                    <div class="stat-card"><div class="stat-number">{{ participant_count }}</div><div class="stat-label">参与人数</div></div>
-                    <div class="stat-card"><div class="stat-number">{{ total_characters }}</div><div class="stat-label">总字符数</div></div>
-                    <div class="stat-card"><div class="stat-number">{{ emoji_count }}</div><div class="stat-label">表情数量</div></div>
+                    <div class="stat-card"><div class="stat-number">{{message_count}}</div><div class="stat-label">消息总数</div></div>
+                    <div class="stat-card"><div class="stat-number">{{participant_count}}</div><div class="stat-label">参与人数</div></div>
+                    <div class="stat-card"><div class="stat-number">{{total_characters}}</div><div class="stat-label">总字符数</div></div>
+                    <div class="stat-card"><div class="stat-number">{{emoji_count}}</div><div class="stat-label">表情数量</div></div>
                 </div>
                 <div class="active-period">
-                    <div class="time">{{ most_active_period }}</div>
+                    <div class="time">{{most_active_period}}</div>
                     <div class="label">最活跃时段</div>
                 </div>
             </div>
@@ -560,24 +560,24 @@
                         <div class="chart-title">⏱️ 24小时活跃度分布</div>
                     </div>
                 </div>
-                {{ hourly_chart_html }}
+                {{hourly_chart_html}}
             </div>
             <div class="section">
                 <h2 class="section-title">💬 热门话题</h2>
-                <div class="topics-grid">{{ topics_html }}</div>
+                <div class="topics-grid">{{topics_html}}</div>
             </div>
             <div class="section">
                 <h2 class="section-title">🏆 群友称号</h2>
-                <div class="users-grid">{{ titles_html }}</div>
+                <div class="users-grid">{{titles_html}}</div>
             </div>
             <div class="section">
                 <h2 class="section-title">💬 群圣经</h2>
-                {{ quotes_html }}
+                {{quotes_html}}
             </div>
         </div>
         <div class="footer">
-            由 AstrBot QQ群日常分析插件 生成 | {{ current_datetime }} | SXP-Simon/astrbot-qq-group-daily-analysis<br>
-            <small style="opacity: 0.8; font-size: 0.9em;">🤖 AI分析消耗：{{ total_tokens }} tokens (输入: {{ prompt_tokens }}, 输出: {{ completion_tokens }})</small>
+            由 AstrBot QQ群日常分析插件 生成 | {{current_datetime}} | SXP-Simon/astrbot-qq-group-daily-analysis<br>
+            <small style="opacity: 0.8; font-size: 0.9em;">🤖 AI分析消耗：{{total_tokens}} tokens (输入: {{prompt_tokens}}, 输出: {{completion_tokens}})</small>
         </div>
     </div>
 </body>
