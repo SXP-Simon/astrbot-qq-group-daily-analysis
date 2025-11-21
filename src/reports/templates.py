@@ -24,20 +24,26 @@ class HTMLTemplates:
         )
     
     def get_image_template(self) -> str:
-        """获取图片报告的HTML模板（使用Jinja2渲染）"""
+        """获取图片报告的HTML模板（返回原始模板字符串）"""
         try:
+            # 获取模板对象
             template = self.jinja_env.get_template('image_template.html')
-            return template.render()
+            # 读取原始模板文件内容，而不是渲染它
+            with open(template.filename, 'r', encoding='utf-8') as f:
+                return f.read()
         except Exception as e:
             # 如果加载失败，返回空字符串让调用者处理
             print(f"加载图片模板失败: {e}")
             return ""
     
     def get_pdf_template(self) -> str:
-        """获取PDF报告的HTML模板（使用Jinja2渲染）"""
+        """获取PDF报告的HTML模板（返回原始模板字符串）"""
         try:
+            # 获取模板对象
             template = self.jinja_env.get_template('pdf_template.html')
-            return template.render()
+            # 读取原始模板文件内容，而不是渲染它
+            with open(template.filename, 'r', encoding='utf-8') as f:
+                return f.read()
         except Exception as e:
             # 如果加载失败，返回空字符串让调用者处理
             print(f"加载PDF模板失败: {e}")

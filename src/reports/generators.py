@@ -284,27 +284,39 @@ class ReportGenerator:
         """
         result = template
 
-        # 调试：记录渲染数据
-        logger.info(
-            f"渲染数据键: {list(data.keys())}, 使用Jinja风格: {use_jinja_style}"
-        )
+        # 调试：记录模板长度和渲染数据
+        logger.info(f"模板原始长度: {len(template)} 字符")
+        logger.info(f"渲染数据键: {list(data.keys())}, 使用Jinja风格: {use_jinja_style}")
 
+        # 调试：检查模板中实际包含的占位符
+        import re
+        template_placeholders = re.findall(r"\{\{[^}]+\}\}", template)
+        logger.info(f"模板中发现的占位符: {template_placeholders[:20]}")
+
+        replace_count = 0
         for key, value in data.items():
             # 统一使用双大括号格式 {{key}}
             placeholder = "{{" + key + "}}"
             
-            # 调试：记录替换过程
+            # 检查占位符是否存在
             if placeholder in result:
-                logger.debug(f"替换 {placeholder} -> {str(value)[:100]}...")
-            result = result.replace(placeholder, str(value))
+                logger.debug(f"✓ 找到占位符: {placeholder}")
+                old_length = len(result)
+                result = result.replace(placeholder, str(value))
+                new_length = len(result)
+                logger.debug(f"  替换后长度变化: {old_length} -> {new_length} (+{new_length - old_length})")
+                replace_count += 1
+            else:
+                logger.debug(f"✗ 未找到占位符: {placeholder}")
+
+        logger.info(f"完成 {replace_count} 个占位符替换，最终长度: {len(result)} 字符")
 
         # 检查是否还有未替换的占位符
-        import re
-        logger.info("正则替换占位符...")
         remaining_placeholders = re.findall(r"\{\{[^}]+\}\}", result)
-
         if remaining_placeholders:
-            logger.warning(f"未替换的占位符: {remaining_placeholders[:10]}")
+            logger.warning(f"未替换的占位符 ({len(remaining_placeholders)}个): {remaining_placeholders[:10]}")
+        else:
+            logger.info("✓ 所有占位符均已成功替换")
 
         return result
 
