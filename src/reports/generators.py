@@ -28,7 +28,16 @@ class ReportGenerator:
         try:
             # 准备渲染数据
             render_payload = await self._prepare_render_data(analysis_result)
-            # 使用AstrBot内置的HTML渲染服务（直接传递模板和数据）
+            
+            # 先渲染HTML模板
+            html_content = self._render_html_template(
+                self.html_templates.get_image_template(),
+                render_payload,
+                use_jinja_style=True
+            )
+            logger.info(f"图片报告HTML渲染完成，长度: {len(html_content)} 字符")
+            
+            # 使用AstrBot内置的HTML渲染服务（传递渲染后的HTML）
             # 使用兼容的图片生成选项（基于NetworkRenderStrategy的默认设置）
             image_options = {
                 "full_page": True,
@@ -36,8 +45,8 @@ class ReportGenerator:
                 "quality": 95,  # 设置合理的质量
             }
             image_url = await html_render_func(
-                self.html_templates.get_image_template(),
-                render_payload,
+                html_content,  # 渲染后的HTML内容
+                {},  # 空数据字典，因为数据已包含在HTML中
                 True,  # return_url=True，返回URL而不是下载文件
                 image_options,
             )
@@ -56,8 +65,8 @@ class ReportGenerator:
                     "quality": 70,  # 降低质量以提高兼容性
                 }
                 image_url = await html_render_func(
-                    self.html_templates.get_image_template(),
-                    render_payload,
+                    html_content,  # 使用已渲染的HTML
+                    {},  # 空数据字典
                     True,
                     simple_options,
                 )
