@@ -157,22 +157,13 @@ class ReportGenerator:
 
     async def _prepare_render_data(self, analysis_result: dict) -> dict:
         """准备渲染数据"""
-        logger.info("=" * 80)
-        logger.info("开始准备渲染数据")
-        
         stats = analysis_result["statistics"]
         topics = analysis_result["topics"]
         user_titles = analysis_result["user_titles"]
         activity_viz = stats.activity_visualization
-        
-        logger.info(f"统计数据: message_count={stats.message_count}, participant_count={stats.participant_count}")
-        logger.info(f"话题数量: {len(topics)}")
-        logger.info(f"用户称号数量: {len(user_titles)}")
-        logger.info(f"金句数量: {len(stats.golden_quotes)}")
 
         # 使用Jinja2模板构建话题HTML（批量渲染）
         max_topics = self.config_manager.get_max_topics()
-        logger.info(f"最大话题数限制: {max_topics}")
         topics_list = []
         for i, topic in enumerate(topics[:max_topics], 1):
             topics_list.append({
@@ -180,18 +171,15 @@ class ReportGenerator:
                 'topic': topic,
                 'contributors': "、".join(topic.contributors)
             })
-        logger.info(f"话题列表数据: {topics_list}")
         
         topics_html = self.html_templates.render_template(
             'topic_item.html',
             topics=topics_list
         )
         logger.info(f"话题HTML生成完成，长度: {len(topics_html)}")
-        logger.debug(f"话题HTML内容: {topics_html[:200]}...")
 
         # 使用Jinja2模板构建用户称号HTML（批量渲染，包含头像）
         max_user_titles = self.config_manager.get_max_user_titles()
-        logger.info(f"最大用户称号数限制: {max_user_titles}")
         titles_list = []
         for title in user_titles[:max_user_titles]:
             # 获取用户头像
@@ -204,18 +192,15 @@ class ReportGenerator:
                 'avatar_data': avatar_data
             }
             titles_list.append(title_data)
-        logger.info(f"用户称号列表数据: {titles_list}")
         
         titles_html = self.html_templates.render_template(
             'user_title_item.html',
             titles=titles_list
         )
         logger.info(f"用户称号HTML生成完成，长度: {len(titles_html)}")
-        logger.debug(f"用户称号HTML内容: {titles_html[:200]}...")
 
         # 使用Jinja2模板构建金句HTML（批量渲染）
         max_golden_quotes = self.config_manager.get_max_golden_quotes()
-        logger.info(f"最大金句数限制: {max_golden_quotes}")
         quotes_list = []
         for quote in stats.golden_quotes[:max_golden_quotes]:
             quotes_list.append({
@@ -223,14 +208,12 @@ class ReportGenerator:
                 'sender': quote.sender,
                 'reason': quote.reason
             })
-        logger.info(f"金句列表数据: {quotes_list}")
         
         quotes_html = self.html_templates.render_template(
             'quote_item.html',
             quotes=quotes_list
         )
         logger.info(f"金句HTML生成完成，长度: {len(quotes_html)}")
-        logger.debug(f"金句HTML内容: {quotes_html[:200]}...")
 
         # 生成活跃度可视化HTML
         hourly_chart_html = self.activity_visualizer.generate_hourly_chart_html(
@@ -262,14 +245,7 @@ class ReportGenerator:
             else 0,
         }
         
-        logger.info("最终渲染数据键列表:")
-        for key, value in render_data.items():
-            if key.endswith('_html'):
-                logger.info(f"  {key}: {len(str(value))} 字符")
-            else:
-                logger.info(f"  {key}: {value}")
-        
-        logger.info("=" * 80)
+        logger.info(f"渲染数据准备完成，包含 {len(render_data)} 个字段")
         return render_data
 
     def _render_html_template(
@@ -284,39 +260,16 @@ class ReportGenerator:
         """
         result = template
 
-        # 调试：记录模板长度和渲染数据
-        logger.info(f"模板原始长度: {len(template)} 字符")
-        logger.info(f"渲染数据键: {list(data.keys())}, 使用Jinja风格: {use_jinja_style}")
-
-        # 调试：检查模板中实际包含的占位符
-        import re
-        template_placeholders = re.findall(r"\{\{[^}]+\}\}", template)
-        logger.info(f"模板中发现的占位符: {template_placeholders[:20]}")
-
-        replace_count = 0
         for key, value in data.items():
             # 统一使用双大括号格式 {{key}}
             placeholder = "{{" + key + "}}"
-            
-            # 检查占位符是否存在
-            if placeholder in result:
-                logger.debug(f"✓ 找到占位符: {placeholder}")
-                old_length = len(result)
-                result = result.replace(placeholder, str(value))
-                new_length = len(result)
-                logger.debug(f"  替换后长度变化: {old_length} -> {new_length} (+{new_length - old_length})")
-                replace_count += 1
-            else:
-                logger.debug(f"✗ 未找到占位符: {placeholder}")
-
-        logger.info(f"完成 {replace_count} 个占位符替换，最终长度: {len(result)} 字符")
+            result = result.replace(placeholder, str(value))
 
         # 检查是否还有未替换的占位符
+        import re
         remaining_placeholders = re.findall(r"\{\{[^}]+\}\}", result)
         if remaining_placeholders:
             logger.warning(f"未替换的占位符 ({len(remaining_placeholders)}个): {remaining_placeholders[:10]}")
-        else:
-            logger.info("✓ 所有占位符均已成功替换")
 
         return result
 
