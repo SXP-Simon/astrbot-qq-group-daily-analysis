@@ -19,6 +19,7 @@ class ReportGenerator:
     def __init__(self, config_manager):
         self.config_manager = config_manager
         self.activity_visualizer = ActivityVisualizer()
+        self.html_templates = HTMLTemplates()  # 实例化HTML模板管理器
 
     async def generate_image_report(
         self, analysis_result: dict, group_id: str, html_render_func
@@ -35,7 +36,7 @@ class ReportGenerator:
                 "quality": 95,  # 设置合理的质量
             }
             image_url = await html_render_func(
-                HTMLTemplates.get_image_template(),
+                self.html_templates.get_image_template(),
                 render_payload,
                 True,  # return_url=True，返回URL而不是下载文件
                 image_options,
@@ -55,7 +56,7 @@ class ReportGenerator:
                     "quality": 70,  # 降低质量以提高兼容性
                 }
                 image_url = await html_render_func(
-                    HTMLTemplates.get_image_template(),
+                    self.html_templates.get_image_template(),
                     render_payload,
                     True,
                     simple_options,
@@ -88,7 +89,7 @@ class ReportGenerator:
 
             # 生成 HTML 内容（PDF模板使用{}占位符）
             html_content = self._render_html_template(
-                HTMLTemplates.get_pdf_template(), render_data, use_jinja_style=False
+                self.html_templates.get_pdf_template(), render_data, use_jinja_style=False
             )
             logger.info(f"HTML 内容生成完成，长度: {len(html_content)} 字符")
 
@@ -152,61 +153,52 @@ class ReportGenerator:
         user_titles = analysis_result["user_titles"]
         activity_viz = stats.activity_visualization
 
-        # 构建话题HTML
-        topics_html = ""
+        # 使用Jinja2模板构建话题HTML（批量渲染）
         max_topics = self.config_manager.get_max_topics()
+        topics_list = []
         for i, topic in enumerate(topics[:max_topics], 1):
-            contributors_str = "、".join(topic.contributors)
-            topics_html += f"""
-            <div class="topic-item">
-                <div class="topic-header">
-                    <span class="topic-number">{i}</span>
-                    <span class="topic-title">{topic.topic}</span>
-                </div>
-                <div class="topic-contributors">参与者: {contributors_str}</div>
-                <div class="topic-detail">{topic.detail}</div>
-            </div>
-            """
+            topics_list.append({
+                'index': i,
+                'topic': topic,
+                'contributors': "、".join(topic.contributors)
+            })
+        topics_html = self.html_templates.render_template(
+            'topic_item.html',
+            topics=topics_list
+        )
 
-        # 构建用户称号HTML（包含头像）
-        titles_html = ""
+        # 使用Jinja2模板构建用户称号HTML（批量渲染，包含头像）
         max_user_titles = self.config_manager.get_max_user_titles()
+        titles_list = []
         for title in user_titles[:max_user_titles]:
             # 获取用户头像
             avatar_data = await self._get_user_avatar(str(title.qq))
-            avatar_html = (
-                f'<img src="{avatar_data}" class="user-avatar" alt="头像">'
-                if avatar_data
-                else '<div class="user-avatar-placeholder">👤</div>'
-            )
+            title_data = {
+                'name': title.name,
+                'title': title.title,
+                'mbti': title.mbti,
+                'reason': title.reason,
+                'avatar_data': avatar_data
+            }
+            titles_list.append(title_data)
+        titles_html = self.html_templates.render_template(
+            'user_title_item.html',
+            titles=titles_list
+        )
 
-            titles_html += f"""
-            <div class="user-title">
-                <div class="user-info">
-                    {avatar_html}
-                    <div class="user-details">
-                        <div class="user-name">{title.name}</div>
-                        <div class="user-badges">
-                            <div class="user-title-badge">{title.title}</div>
-                            <div class="user-mbti">{title.mbti}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="user-reason">{title.reason}</div>
-            </div>
-            """
-
-        # 构建金句HTML
-        quotes_html = ""
+        # 使用Jinja2模板构建金句HTML（批量渲染）
         max_golden_quotes = self.config_manager.get_max_golden_quotes()
+        quotes_list = []
         for quote in stats.golden_quotes[:max_golden_quotes]:
-            quotes_html += f"""
-            <div class="quote-item">
-                <div class="quote-content">"{quote.content}"</div>
-                <div class="quote-author">—— {quote.sender}</div>
-                <div class="quote-reason">{quote.reason}</div>
-            </div>
-            """
+            quotes_list.append({
+                'content': quote.content,
+                'sender': quote.sender,
+                'reason': quote.reason
+            })
+        quotes_html = self.html_templates.render_template(
+            'quote_item.html',
+            quotes=quotes_list
+        )
 
         # 生成活跃度可视化HTML
         hourly_chart_html = self.activity_visualizer.generate_hourly_chart_html(
