@@ -28,15 +28,19 @@ class ReportGenerator:
         try:
             # 准备渲染数据
             render_payload = await self._prepare_render_data(analysis_result)
-            
+
             # 先渲染HTML模板
             html_content = self._render_html_template(
-                self.html_templates.get_image_template(),
-                render_payload,
-                use_jinja_style=True
+                self.html_templates.get_image_template(), render_payload
             )
+
+            # 检查HTML内容是否有效
+            if not html_content:
+                logger.error("图片报告HTML渲染失败：返回空内容")
+                return None
+
             logger.info(f"图片报告HTML渲染完成，长度: {len(html_content)} 字符")
-            
+
             # 使用AstrBot内置的HTML渲染服务（传递渲染后的HTML）
             # 使用兼容的图片生成选项（基于NetworkRenderStrategy的默认设置）
             image_options = {
@@ -98,8 +102,14 @@ class ReportGenerator:
 
             # 生成 HTML 内容（PDF模板使用{{}}占位符）
             html_content = self._render_html_template(
-                self.html_templates.get_pdf_template(), render_data, use_jinja_style=True
+                self.html_templates.get_pdf_template(), render_data
             )
+
+            # 检查HTML内容是否有效
+            if not html_content:
+                logger.error("PDF报告HTML渲染失败：返回空内容")
+                return None
+
             logger.info(f"HTML 内容生成完成，长度: {len(html_content)} 字符")
 
             # 转换为 PDF
@@ -166,15 +176,16 @@ class ReportGenerator:
         max_topics = self.config_manager.get_max_topics()
         topics_list = []
         for i, topic in enumerate(topics[:max_topics], 1):
-            topics_list.append({
-                'index': i,
-                'topic': topic,
-                'contributors': "、".join(topic.contributors)
-            })
-        
+            topics_list.append(
+                {
+                    "index": i,
+                    "topic": topic,
+                    "contributors": "、".join(topic.contributors),
+                }
+            )
+
         topics_html = self.html_templates.render_template(
-            'topic_item.html',
-            topics=topics_list
+            "topic_item.html", topics=topics_list
         )
         logger.info(f"话题HTML生成完成，长度: {len(topics_html)}")
 
@@ -185,17 +196,16 @@ class ReportGenerator:
             # 获取用户头像
             avatar_data = await self._get_user_avatar(str(title.qq))
             title_data = {
-                'name': title.name,
-                'title': title.title,
-                'mbti': title.mbti,
-                'reason': title.reason,
-                'avatar_data': avatar_data
+                "name": title.name,
+                "title": title.title,
+                "mbti": title.mbti,
+                "reason": title.reason,
+                "avatar_data": avatar_data,
             }
             titles_list.append(title_data)
-        
+
         titles_html = self.html_templates.render_template(
-            'user_title_item.html',
-            titles=titles_list
+            "user_title_item.html", titles=titles_list
         )
         logger.info(f"用户称号HTML生成完成，长度: {len(titles_html)}")
 
@@ -203,15 +213,16 @@ class ReportGenerator:
         max_golden_quotes = self.config_manager.get_max_golden_quotes()
         quotes_list = []
         for quote in stats.golden_quotes[:max_golden_quotes]:
-            quotes_list.append({
-                'content': quote.content,
-                'sender': quote.sender,
-                'reason': quote.reason
-            })
-        
+            quotes_list.append(
+                {
+                    "content": quote.content,
+                    "sender": quote.sender,
+                    "reason": quote.reason,
+                }
+            )
+
         quotes_html = self.html_templates.render_template(
-            'quote_item.html',
-            quotes=quotes_list
+            "quote_item.html", quotes=quotes_list
         )
         logger.info(f"金句HTML生成完成，长度: {len(quotes_html)}")
 
@@ -244,19 +255,16 @@ class ReportGenerator:
             if stats.token_usage.completion_tokens
             else 0,
         }
-        
+
         logger.info(f"渲染数据准备完成，包含 {len(render_data)} 个字段")
         return render_data
 
-    def _render_html_template(
-        self, template: str, data: dict, use_jinja_style: bool = False
-    ) -> str:
-        """HTML模板渲染，支持两种占位符格式
+    def _render_html_template(self, template: str, data: dict) -> str:
+        """HTML模板渲染，使用 {{key}} 占位符格式
 
         Args:
             template: HTML模板字符串
-            data: 渲染数据
-            use_jinja_style: 是否使用Jinja2风格的{{key}}占位符（已统一，此参数保留但不再使用）
+            data: 渲染数据字典
         """
         result = template
 
@@ -267,9 +275,11 @@ class ReportGenerator:
 
         # 检查是否还有未替换的占位符
         import re
-        remaining_placeholders = re.findall(r"\{\{[^}]+\}\}", result)
-        if remaining_placeholders:
-            logger.warning(f"未替换的占位符 ({len(remaining_placeholders)}个): {remaining_placeholders[:10]}")
+
+        if remaining_placeholders := re.findall(r"\{\{[^}]+\}\}", result):
+            logger.warning(
+                f"未替换的占位符 ({len(remaining_placeholders)}个): {remaining_placeholders[:10]}"
+            )
 
         return result
 
