@@ -148,13 +148,22 @@ class ReportGenerator:
 
     async def _prepare_render_data(self, analysis_result: dict) -> dict:
         """准备渲染数据"""
+        logger.info("=" * 80)
+        logger.info("开始准备渲染数据")
+        
         stats = analysis_result["statistics"]
         topics = analysis_result["topics"]
         user_titles = analysis_result["user_titles"]
         activity_viz = stats.activity_visualization
+        
+        logger.info(f"统计数据: message_count={stats.message_count}, participant_count={stats.participant_count}")
+        logger.info(f"话题数量: {len(topics)}")
+        logger.info(f"用户称号数量: {len(user_titles)}")
+        logger.info(f"金句数量: {len(stats.golden_quotes)}")
 
         # 使用Jinja2模板构建话题HTML（批量渲染）
         max_topics = self.config_manager.get_max_topics()
+        logger.info(f"最大话题数限制: {max_topics}")
         topics_list = []
         for i, topic in enumerate(topics[:max_topics], 1):
             topics_list.append({
@@ -162,13 +171,18 @@ class ReportGenerator:
                 'topic': topic,
                 'contributors': "、".join(topic.contributors)
             })
+        logger.info(f"话题列表数据: {topics_list}")
+        
         topics_html = self.html_templates.render_template(
             'topic_item.html',
             topics=topics_list
         )
+        logger.info(f"话题HTML生成完成，长度: {len(topics_html)}")
+        logger.debug(f"话题HTML内容: {topics_html[:200]}...")
 
         # 使用Jinja2模板构建用户称号HTML（批量渲染，包含头像）
         max_user_titles = self.config_manager.get_max_user_titles()
+        logger.info(f"最大用户称号数限制: {max_user_titles}")
         titles_list = []
         for title in user_titles[:max_user_titles]:
             # 获取用户头像
@@ -181,13 +195,18 @@ class ReportGenerator:
                 'avatar_data': avatar_data
             }
             titles_list.append(title_data)
+        logger.info(f"用户称号列表数据: {titles_list}")
+        
         titles_html = self.html_templates.render_template(
             'user_title_item.html',
             titles=titles_list
         )
+        logger.info(f"用户称号HTML生成完成，长度: {len(titles_html)}")
+        logger.debug(f"用户称号HTML内容: {titles_html[:200]}...")
 
         # 使用Jinja2模板构建金句HTML（批量渲染）
         max_golden_quotes = self.config_manager.get_max_golden_quotes()
+        logger.info(f"最大金句数限制: {max_golden_quotes}")
         quotes_list = []
         for quote in stats.golden_quotes[:max_golden_quotes]:
             quotes_list.append({
@@ -195,18 +214,23 @@ class ReportGenerator:
                 'sender': quote.sender,
                 'reason': quote.reason
             })
+        logger.info(f"金句列表数据: {quotes_list}")
+        
         quotes_html = self.html_templates.render_template(
             'quote_item.html',
             quotes=quotes_list
         )
+        logger.info(f"金句HTML生成完成，长度: {len(quotes_html)}")
+        logger.debug(f"金句HTML内容: {quotes_html[:200]}...")
 
         # 生成活跃度可视化HTML
         hourly_chart_html = self.activity_visualizer.generate_hourly_chart_html(
             activity_viz.hourly_activity
         )
+        logger.info(f"活跃度图表HTML生成完成，长度: {len(hourly_chart_html)}")
 
-        # 返回扁平化的渲染数据
-        return {
+        # 准备最终渲染数据
+        render_data = {
             "current_date": datetime.now().strftime("%Y年%m月%d日"),
             "current_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "message_count": stats.message_count,
@@ -228,6 +252,16 @@ class ReportGenerator:
             if stats.token_usage.completion_tokens
             else 0,
         }
+        
+        logger.info("最终渲染数据键列表:")
+        for key, value in render_data.items():
+            if key.endswith('_html'):
+                logger.info(f"  {key}: {len(str(value))} 字符")
+            else:
+                logger.info(f"  {key}: {value}")
+        
+        logger.info("=" * 80)
+        return render_data
 
     def _render_html_template(
         self, template: str, data: dict, use_jinja_style: bool = False
