@@ -128,37 +128,33 @@ class ActivityVisualizer:
         """生成每小时活动分布的HTML图表（手账风格）"""
         html_parts = []
         max_activity = max(hourly_activity.values()) if hourly_activity else 1
-        
+
         # 定义颜色映射 - 根据活跃度等级使用不同颜色
         color_vars = {
-            "high": "var(--accent-orange)",      # 高活跃度 - 橙色
-            "medium": "var(--color-green)",      # 中活跃度 - 绿色
-            "low": "var(--color-blue)",          # 低活跃度 - 蓝色
-            "inactive": "var(--color-purple)"    # 无活动 - 紫色
+            "high": "var(--accent-orange)",  # 高活跃度 - 橙色
+            "medium": "var(--color-green)",  # 中活跃度 - 绿色
+            "low": "var(--color-blue)",  # 低活跃度 - 蓝色
+            "inactive": "var(--color-purple)",  # 无活动 - 紫色
         }
 
         for hour in range(24):
             count = hourly_activity.get(hour, 0)
             percentage = (count / max_activity) * 100 if max_activity > 0 else 0
-            
+
             # 确定活跃度等级和颜色
             if count == 0:
-                level = "inactive"
                 color = color_vars["inactive"]
                 width = "2%"  # 无活动时显示很细的线，避免占满整行
             elif percentage >= 70:
-                level = "high"
                 color = color_vars["high"]
                 width = f"{percentage}%"
             elif percentage >= 30:
-                level = "medium"
                 color = color_vars["medium"]
                 width = f"{percentage}%"
             else:
-                level = "low"
                 color = color_vars["low"]
                 width = f"{percentage}%"
-            
+
             # 生成手账风格的图表行
             html_segment = f"""
             <div class="hand-chart-row">
