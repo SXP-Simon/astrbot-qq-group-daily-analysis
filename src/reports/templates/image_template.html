@@ -404,46 +404,59 @@
             </div>
         </div>
 
-        <!-- 2. 统计邮票 -->
-        <div class="stats-row">
-            <div class="stamp" style="transform: rotate(-2deg);">
-                <div class="stamp-inner">
-                    <!-- Chat Icon -->
-                    <svg class="doodle" style="font-size: 2.5rem; color: var(--accent-orange);" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
-                    <div class="stamp-num">{{message_count}}</div>
-                    <div class="stamp-label">消息总数</div>
+        <!-- 2. 统计邮票和活跃时段 -->
+        <div class="grid-layout" style="margin-bottom: 40px;">
+            <!-- 统计邮票 -->
+            <div class="stats-section" style="grid-column: span 8;">
+                <div class="stats-row">
+                    <div class="stamp" style="transform: rotate(-2deg);">
+                        <div class="stamp-inner">
+                            <!-- Chat Icon -->
+                            <svg class="doodle" style="font-size: 2.5rem; color: var(--accent-orange);" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                            <div class="stamp-num">{{message_count}}</div>
+                            <div class="stamp-label">消息总数</div>
+                        </div>
+                    </div>
+                    <div class="stamp" style="transform: rotate(2deg); margin-top: 10px;">
+                        <div class="stamp-inner">
+                            <!-- Users Icon -->
+                            <svg class="doodle" style="font-size: 2.5rem; color: var(--color-green);" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                            <div class="stamp-num">{{participant_count}}</div>
+                            <div class="stamp-label">参与人数</div>
+                        </div>
+                    </div>
+                    <div class="stamp" style="transform: rotate(-1deg);">
+                        <div class="stamp-inner">
+                            <!-- Image Icon -->
+                            <svg class="doodle" style="font-size: 2.5rem; color: var(--color-blue);" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                            <div class="stamp-num">{{emoji_count}}</div>
+                            <div class="stamp-label">表情统计</div>
+                        </div>
+                    </div>
+                    <div class="stamp" style="transform: rotate(3deg); margin-top: 5px;">
+                        <div class="stamp-inner">
+                            <!-- Text Icon -->
+                            <svg class="doodle" style="font-size: 2.5rem; color: var(--color-purple);" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                            <div class="stamp-num">{{total_characters}}</div>
+                            <div class="stamp-label">总字符数</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="stamp" style="transform: rotate(2deg); margin-top: 10px;">
-                <div class="stamp-inner">
-                    <!-- Users Icon -->
-                    <svg class="doodle" style="font-size: 2.5rem; color: var(--color-green);" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                    <div class="stamp-num">{{participant_count}}</div>
-                    <div class="stamp-label">参与人数</div>
-                </div>
-            </div>
-            <div class="stamp" style="transform: rotate(-1deg);">
-                <div class="stamp-inner">
-                    <!-- Image Icon -->
-                    <svg class="doodle" style="font-size: 2.5rem; color: var(--color-blue);" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                    <div class="stamp-num">{{emoji_count}}</div>
-                    <div class="stamp-label">表情统计</div>
-                </div>
-            </div>
-            <div class="stamp" style="transform: rotate(3deg); margin-top: 5px;">
-                <div class="stamp-inner">
-                    <!-- Text Icon -->
-                    <svg class="doodle" style="font-size: 2.5rem; color: var(--color-purple);" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                    <div class="stamp-num">{{total_characters}}</div>
-                    <div class="stamp-label">总字符数</div>
-                </div>
+
+            <!-- 活跃时段 -->
+            <div class="highlight-section" style="grid-column: span 4;">
+                <div class="tape-top"></div>
+                <div style="font-family: var(--font-hand); color: var(--ink-secondary);">✨ Highlight Time</div>
+                <div class="time-big">{{most_active_period}}</div>
+                <div class="time-desc">（此刻，世界色彩斑斓）</div>
             </div>
         </div>
 
         <div class="grid-layout">
             
             <!-- 3. 24小时活跃图表 -->
-            <div class="chart-section">
+            <div class="chart-section" style="grid-column: span 12;">
                 <div class="coil"></div>
                 <div class="section-title">
                     <svg class="doodle" viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
@@ -452,14 +465,6 @@
                 <div style="margin-top: 15px;">
                     {{hourly_chart_html}}
                 </div>
-            </div>
-
-            <!-- 4. 活跃时段 -->
-            <div class="highlight-section">
-                <div class="tape-top"></div>
-                <div style="font-family: var(--font-hand); color: var(--ink-secondary);">✨ Highlight Time</div>
-                <div class="time-big">{{most_active_period}}</div>
-                <div class="time-desc">（此刻，世界色彩斑斓）</div>
             </div>
 
             <!-- 5. 话题记录 -->
