@@ -1,10 +1,12 @@
 {% for topic in topics %}
 <div class="topic-item">
-    <div class="topic-header">
-        <span class="topic-number">{{ topic.index }}</span>
-        <span class="topic-title">{{ topic.topic.topic }}</span>
+    <div class="check-box">
+        <div class="check-tick"></div>
     </div>
-    <div class="topic-contributors">参与者: {{ topic.contributors }}</div>
-    <div class="topic-detail">{{ topic.topic.detail }}</div>
+    <div class="topic-content">
+        <span class="topic-title">{{ topic.topic.topic }}</span>
+        <span style="font-size: 0.9em; color: #999; font-family: var(--font-body);">#{{ "%02d"|format(topic.index) }}</span>
+        <span class="topic-detail">{{ topic.topic.detail }}</span>
+    </div>
 </div>
 {% endfor %}
