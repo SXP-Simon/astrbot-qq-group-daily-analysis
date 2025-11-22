@@ -35,7 +35,7 @@
             --title-text: #bf360c;
             
             --font-title: 'ZCOOL KuaiLe', cursive; /* 标题字体 */
-            --font-hand: 'Long Cang', cursive;     /* 手写体 */
+            --font-hand: 'Indie Flower', "KaiTi", "STKaiti", serif;      /* 手写体 */
             --font-body: 'Noto Sans SC', sans-serif; /* 正文体 */
         }
 
@@ -262,7 +262,7 @@
             display: inline-block;
         }
         .topic-detail {
-            font-family: var(--font-hand); color: #666; font-size: 1.1rem;
+            font-family: var(--font-hand); color: #666; font-size: 1.5rem;
             margin-top: 8px;
         }
 
@@ -380,8 +380,11 @@
 
         /* Footer */
         .footer {
-            margin-top: 60px; text-align: center; font-family: var(--font-hand); color: #aaa;
-            border-top: 2px dashed #ddd; padding-top: 20px;
+            margin-top: 60px; text-align: center; font-family: var(--font-hand);
+            color: var(--ink-secondary); /* 使用更深的颜色提高可读性 */
+            border-top: 2px dashed var(--ink-secondary); /* 使用更深的边框颜色 */
+            padding-top: 20px; font-size: 0.7rem;
+            opacity: 0.8; /* 保持一点柔和感但确保可读 */
         }
 
         @media (max-width: 768px) {

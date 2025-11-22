@@ -145,7 +145,7 @@ class ActivityVisualizer:
             if count == 0:
                 level = "inactive"
                 color = color_vars["inactive"]
-                width = "100%"  # 无活动时显示细线
+                width = "2%"  # 无活动时显示很细的线，避免占满整行
             elif percentage >= 70:
                 level = "high"
                 color = color_vars["high"]
@@ -164,10 +164,9 @@ class ActivityVisualizer:
             <div class="hand-chart-row">
                 <div class="chart-label">{hour:02d}:00</div>
                 <div class="chart-bar-box">
-                    <div class="crayon-bar" style="width: {width}; background: {color};">
-                        <span style="position: absolute; right: 5px; top: -2px; font-size: 0.7rem; font-family: var(--font-hand); color: var(--ink-primary);">{count}</span>
-                    </div>
+                    <div class="crayon-bar" style="width: {width}; background: {color};"></div>
                 </div>
+                <div style="margin-left: 10px; font-size: 0.7rem; font-family: var(--font-hand); color: var(--ink-secondary); min-width: 30px;">{count}</div>
             </div>
             """
             html_parts.append(html_segment)
