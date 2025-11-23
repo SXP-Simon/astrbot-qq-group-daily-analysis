@@ -34,10 +34,6 @@ class ConfigManager:
         if mode == "none":
             return True
 
-    def get_max_concurrent_tasks(self) -> int:
-        """获取自动分析最大并发数"""
-        return self.config.get("max_concurrent_tasks", 5)
-
         glist = self.get_group_list()
         group_id_str = str(group_id)
 
@@ -47,6 +43,10 @@ class ConfigManager:
             return group_id_str not in glist if glist else True
         
         return True
+
+    def get_max_concurrent_tasks(self) -> int:
+        """获取自动分析最大并发数"""
+        return self.config.get("max_concurrent_tasks", 5)
 
     def get_max_messages(self) -> int:
         """获取最大消息数量"""
