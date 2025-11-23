@@ -4,6 +4,7 @@
 """
 
 import asyncio
+import weakref
 from datetime import datetime, timedelta
 from astrbot.api import logger
 
@@ -199,10 +200,17 @@ class AutoScheduler:
             )
 
             # 创建并发任务 - 为每个群聊创建独立的分析任务
+            # 限制最大并发数为 10
+            sem = asyncio.Semaphore(10)
+
+            async def safe_perform_analysis(group_id):
+                async with sem:
+                    return await self._perform_auto_analysis_for_group_with_timeout(group_id)
+
             analysis_tasks = []
             for group_id in enabled_groups:
                 task = asyncio.create_task(
-                    self._perform_auto_analysis_for_group_with_timeout(group_id),
+                    safe_perform_analysis(group_id),
                     name=f"analysis_group_{group_id}",
                 )
                 analysis_tasks.append(task)
@@ -246,12 +254,16 @@ class AutoScheduler:
         # 为每个群聊使用独立的锁，避免全局锁导致串行化
         group_lock_key = f"analysis_{group_id}"
         if not hasattr(self, "_group_locks"):
-            self._group_locks = {}
+            self._group_locks = weakref.WeakValueDictionary()
 
-        if group_lock_key not in self._group_locks:
-            self._group_locks[group_lock_key] = asyncio.Lock()
+        # 从 WeakValueDictionary 获取锁，如果不存在则创建
+        # 注意：必须将锁赋值给局部变量以保持引用，否则可能会被回收
+        lock = self._group_locks.get(group_lock_key)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._group_locks[group_lock_key] = lock
 
-        async with self._group_locks[group_lock_key]:
+        async with lock:
             try:
                 start_time = asyncio.get_event_loop().time()
 
@@ -381,12 +393,8 @@ class AutoScheduler:
                 logger.error(f"群 {group_id} 自动分析执行失败: {e}", exc_info=True)
 
             finally:
-                # 清理群聊锁资源（可选，防止内存泄漏）
-                if hasattr(self, "_group_locks") and len(self._group_locks) > 50:
-                    old_locks = list(self._group_locks.keys())[:10]
-                    for lock_key in old_locks:
-                        if not self._group_locks[lock_key].locked():
-                            del self._group_locks[lock_key]
+                # 锁资源由 WeakValueDictionary 自动管理，无需手动清理
+                logger.info(f"自动分析完成")
 
     async def _send_analysis_report(self, group_id: str, analysis_result: dict):
         """发送分析报告到群"""
