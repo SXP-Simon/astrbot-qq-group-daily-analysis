@@ -34,6 +34,10 @@ class ConfigManager:
         if mode == "none":
             return True
 
+    def get_max_concurrent_tasks(self) -> int:
+        """获取自动分析最大并发数"""
+        return self.config.get("max_concurrent_tasks", 5)
+
         glist = self.get_group_list()
         group_id_str = str(group_id)
 
@@ -235,6 +239,11 @@ class ConfigManager:
     def set_group_list(self, groups: list[str]):
         """设置群组列表"""
         self.config["group_list"] = groups
+        self.config.save_config()
+
+    def set_max_concurrent_tasks(self, count: int):
+        """设置自动分析最大并发数"""
+        self.config["max_concurrent_tasks"] = count
         self.config.save_config()
 
     def set_max_messages(self, count: int):

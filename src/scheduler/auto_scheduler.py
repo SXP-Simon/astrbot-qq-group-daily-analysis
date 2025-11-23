@@ -212,8 +212,10 @@ class AutoScheduler:
             )
 
             # 创建并发任务 - 为每个群聊创建独立的分析任务
-            # 限制最大并发数为 10
-            sem = asyncio.Semaphore(10)
+            # 限制最大并发数
+            max_concurrent = self.config_manager.get_max_concurrent_tasks()
+            logger.info(f"自动分析并发数限制: {max_concurrent}")
+            sem = asyncio.Semaphore(max_concurrent)
 
             async def safe_perform_analysis(group_id):
                 async with sem:
