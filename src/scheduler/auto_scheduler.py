@@ -190,7 +190,19 @@ class AutoScheduler:
         try:
             logger.info("开始执行自动群聊分析（并发模式）")
 
-            enabled_groups = self.config_manager.get_enabled_groups()
+            # 根据配置确定需要分析的群组
+            group_list_mode = self.config_manager.get_group_list_mode()
+            
+            # 始终获取所有群组并进行过滤
+            logger.info(f"自动分析使用 {group_list_mode} 模式，正在获取群列表...")
+            all_groups = await self._get_all_groups()
+            enabled_groups = []
+            for group_id in all_groups:
+                if self.config_manager.is_group_allowed(group_id):
+                    enabled_groups.append(group_id)
+            
+            logger.info(f"根据 {group_list_mode} 过滤后，共有 {len(enabled_groups)} 个群聊需要分析")
+            
             if not enabled_groups:
                 logger.info("没有启用的群聊需要分析")
                 return
@@ -395,6 +407,34 @@ class AutoScheduler:
             finally:
                 # 锁资源由 WeakValueDictionary 自动管理，无需手动清理
                 logger.info(f"自动分析完成")
+
+    async def _get_all_groups(self) -> list[str]:
+        """获取所有bot实例所在的群列表"""
+        all_groups = set()
+        
+        if not hasattr(self.bot_manager, "_bot_instances") or not self.bot_manager._bot_instances:
+            return []
+
+        for platform_id, bot_instance in self.bot_manager._bot_instances.items():
+            try:
+                # 尝试使用 call_action 获取群列表
+                if hasattr(bot_instance, "call_action"):
+                    # 尝试 OneBot v11 get_group_list
+                    try:
+                        result = await bot_instance.call_action("get_group_list")
+                        if isinstance(result, list):
+                            for group in result:
+                                if isinstance(group, dict) and "group_id" in group:
+                                    all_groups.add(str(group["group_id"]))
+                    except Exception as e:
+                        logger.debug(f"平台 {platform_id} 获取群列表失败 (get_group_list): {e}")
+                        
+                    # 如果需要，尝试其他方法（例如针对其他协议）
+                    # 目前专注于 OneBot v11，因为它是最常见的
+            except Exception as e:
+                logger.error(f"平台 {platform_id} 获取群列表异常: {e}")
+                
+        return list(all_groups)
 
     async def _send_analysis_report(self, group_id: str, analysis_result: dict):
         """发送分析报告到群"""
