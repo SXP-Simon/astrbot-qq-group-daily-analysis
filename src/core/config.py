@@ -29,19 +29,19 @@ class ConfigManager:
         mode = self.get_group_list_mode().lower()
         if mode not in ("whitelist", "blacklist", "none"):
             mode = "none"
-        
+
         # none模式下，不进行黑白名单检查，由调用方决定（通常是回退到 enabled_groups）
         if mode == "none":
             return True
 
-        glist = self.get_group_list()
+        glist = [str(g) for g in self.get_group_list()]
         group_id_str = str(group_id)
 
         if mode == "whitelist":
             return group_id_str in glist if glist else False
         if mode == "blacklist":
             return group_id_str not in glist if glist else True
-        
+
         return True
 
     def get_max_concurrent_tasks(self) -> int:

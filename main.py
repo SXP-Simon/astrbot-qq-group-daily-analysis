@@ -417,7 +417,9 @@ class QQGroupDailyAnalysis(Star):
                 else:
                     yield event.plain_result("ℹ️ 当前群已在黑名单中")
             else:
-                yield event.plain_result("ℹ️ 当前为无限制模式，如需禁用请切换到黑名单模式")
+                yield event.plain_result(
+                    "ℹ️ 当前为无限制模式，如需禁用请切换到黑名单模式"
+                )
 
         elif action == "reload":
             # 重新启动定时任务
@@ -446,7 +448,7 @@ class QQGroupDailyAnalysis(Star):
             is_allowed = config_manager.is_group_allowed(group_id)
             status = "已启用" if is_allowed else "未启用"
             mode = config_manager.get_group_list_mode()
-            
+
             auto_status = (
                 "已启用" if config_manager.get_enable_auto_analysis() else "未启用"
             )

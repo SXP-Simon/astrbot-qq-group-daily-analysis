@@ -192,7 +192,7 @@ class AutoScheduler:
 
             # 根据配置确定需要分析的群组
             group_list_mode = self.config_manager.get_group_list_mode()
-            
+
             # 始终获取所有群组并进行过滤
             logger.info(f"自动分析使用 {group_list_mode} 模式，正在获取群列表...")
             all_groups = await self._get_all_groups()
@@ -201,9 +201,11 @@ class AutoScheduler:
             for group_id in all_groups:
                 if self.config_manager.is_group_allowed(group_id):
                     enabled_groups.append(group_id)
-            
-            logger.info(f"根据 {group_list_mode} 过滤后，共有 {len(enabled_groups)} 个群聊需要分析")
-            
+
+            logger.info(
+                f"根据 {group_list_mode} 过滤后，共有 {len(enabled_groups)} 个群聊需要分析"
+            )
+
             if not enabled_groups:
                 logger.info("没有启用的群聊需要分析")
                 return
@@ -220,7 +222,9 @@ class AutoScheduler:
 
             async def safe_perform_analysis(group_id):
                 async with sem:
-                    return await self._perform_auto_analysis_for_group_with_timeout(group_id)
+                    return await self._perform_auto_analysis_for_group_with_timeout(
+                        group_id
+                    )
 
             analysis_tasks = []
             for group_id in enabled_groups:
@@ -409,13 +413,16 @@ class AutoScheduler:
 
             finally:
                 # 锁资源由 WeakValueDictionary 自动管理，无需手动清理
-                logger.info(f"自动分析完成")
+                logger.info(f"群 {group_id} 自动分析完成")
 
     async def _get_all_groups(self) -> list[str]:
         """获取所有bot实例所在的群列表"""
         all_groups = set()
-        
-        if not hasattr(self.bot_manager, "_bot_instances") or not self.bot_manager._bot_instances:
+
+        if (
+            not hasattr(self.bot_manager, "_bot_instances")
+            or not self.bot_manager._bot_instances
+        ):
             return []
 
         for platform_id, bot_instance in self.bot_manager._bot_instances.items():
@@ -424,37 +431,51 @@ class AutoScheduler:
                 call_action_func = None
                 if hasattr(bot_instance, "call_action"):
                     call_action_func = bot_instance.call_action
-                elif hasattr(bot_instance, "api") and hasattr(bot_instance.api, "call_action"):
+                elif hasattr(bot_instance, "api") and hasattr(
+                    bot_instance.api, "call_action"
+                ):
                     call_action_func = bot_instance.api.call_action
-                
+
                 if call_action_func:
                     # 尝试 OneBot v11 get_group_list
                     try:
                         result = await call_action_func("get_group_list")
-                        logger.debug(f"平台 {platform_id} get_group_list 返回类型: {type(result)}")
-                        
+                        logger.debug(
+                            f"平台 {platform_id} get_group_list 返回类型: {type(result)}"
+                        )
+
                         # 处理可能的字典返回 (e.g. {'data': [...], 'retcode': 0})
-                        if isinstance(result, dict) and "data" in result and isinstance(result["data"], list):
-                            logger.debug(f"检测到字典格式返回，提取 data 字段")
+                        if (
+                            isinstance(result, dict)
+                            and "data" in result
+                            and isinstance(result["data"], list)
+                        ):
+                            logger.debug("检测到字典格式返回，提取 data 字段")
                             result = result["data"]
-                        
+
                         if isinstance(result, list):
                             for group in result:
                                 if isinstance(group, dict) and "group_id" in group:
                                     all_groups.add(str(group["group_id"]))
-                            logger.info(f"平台 {platform_id} 成功获取 {len(result)} 个群组")
+                            logger.info(
+                                f"平台 {platform_id} 成功获取 {len(result)} 个群组"
+                            )
                         else:
-                            logger.warning(f"平台 {platform_id} get_group_list 返回格式非列表: {result}")
+                            logger.warning(
+                                f"平台 {platform_id} get_group_list 返回格式非列表: {result}"
+                            )
                     except Exception as e:
-                        logger.debug(f"平台 {platform_id} 获取群列表失败 (get_group_list): {e}")
-                        
+                        logger.debug(
+                            f"平台 {platform_id} 获取群列表失败 (get_group_list): {e}"
+                        )
+
                     # 如果需要，尝试其他方法（例如针对其他协议）
                     # 目前专注于 OneBot v11，因为它是最常见的
                 else:
                     logger.debug(f"平台 {platform_id} 的 bot 实例没有 call_action 方法")
             except Exception as e:
                 logger.error(f"平台 {platform_id} 获取群列表异常: {e}")
-                
+
         return list(all_groups)
 
     async def _send_analysis_report(self, group_id: str, analysis_result: dict):
