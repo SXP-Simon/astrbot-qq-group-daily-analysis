@@ -5,7 +5,7 @@ Bot实例管理模块
 
 from typing import Any
 from astrbot.api import logger
-from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import AiocqhttpAdapter
+from astrbot.api.platform import AiocqhttpAdapter
 
 
 class BotManager:
