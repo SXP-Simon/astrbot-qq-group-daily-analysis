@@ -175,7 +175,7 @@ class QQGroupDailyAnalysis(Star):
 
         try:
             # 获取该群对应的平台ID和bot实例
-            platform_id = await auto_scheduler._get_platform_id_for_group(group_id)
+            platform_id = auto_scheduler._get_platform_id_for_group(group_id)
             bot_instance = bot_manager.get_bot_instance(platform_id)
 
             if not bot_instance:
