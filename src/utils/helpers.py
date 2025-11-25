@@ -3,12 +3,11 @@
 包含消息分析和其他通用功能
 """
 
-from astrbot.api import logger
-
+from ...src.models.data_models import TokenUsage
+from ...src.core.message_handler import MessageHandler
 from ...src.analysis.llm_analyzer import LLMAnalyzer
 from ...src.analysis.statistics import UserAnalyzer
-from ...src.core.message_handler import MessageHandler
-from ...src.models.data_models import TokenUsage
+from astrbot.api import logger
 
 
 class MessageAnalyzer:

@@ -3,15 +3,13 @@
 专门处理群聊话题分析
 """
 
-import re
 from datetime import datetime
-
+import re
 from astrbot.api import logger
-
 from ...models.data_models import SummaryTopic, TokenUsage
-from ..utils import InfoUtils
-from ..utils.json_utils import extract_topics_with_regex
 from .base_analyzer import BaseAnalyzer
+from ..utils.json_utils import extract_topics_with_regex
+from ..utils import InfoUtils
 
 
 class TopicAnalyzer(BaseAnalyzer):

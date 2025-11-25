@@ -6,7 +6,6 @@
 import asyncio
 import weakref
 from datetime import datetime, timedelta
-
 from astrbot.api import logger
 
 
@@ -97,9 +96,7 @@ class AutoScheduler:
                         continue
 
                 # 如果所有适配器都尝试失败，记录错误并返回 None
-                logger.error(
-                    f"❌ 无法确定群 {group_id} 属于哪个平台 (已尝试: {list(self.bot_manager._bot_instances.keys())})"
-                )
+                logger.error(f"❌ 无法确定群 {group_id} 属于哪个平台 (已尝试: {list(self.bot_manager._bot_instances.keys())})")
                 return None
 
             # 没有任何bot实例，返回None

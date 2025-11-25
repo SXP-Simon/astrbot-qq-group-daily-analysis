@@ -3,11 +3,11 @@
 """
 
 from .data_models import (
-    GoldenQuote,
-    GroupStatistics,
     SummaryTopic,
-    TokenUsage,
     UserTitle,
+    GoldenQuote,
+    TokenUsage,
+    GroupStatistics,
 )
 
 __all__ = ["SummaryTopic", "UserTitle", "GoldenQuote", "TokenUsage", "GroupStatistics"]

@@ -4,10 +4,8 @@ HTML模板模块
 """
 
 import os
-
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-
 from astrbot.api import logger
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
 class HTMLTemplates:

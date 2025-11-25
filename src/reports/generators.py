@@ -3,17 +3,14 @@
 负责生成各种格式的分析报告
 """
 
-import asyncio
 import base64
+import aiohttp
 from datetime import datetime
 from pathlib import Path
-
-import aiohttp
-
 from astrbot.api import logger
-
-from ..visualization.activity_charts import ActivityVisualizer
 from .templates import HTMLTemplates
+from ..visualization.activity_charts import ActivityVisualizer
+import asyncio
 
 
 class ReportGenerator:
@@ -313,11 +310,10 @@ class ReportGenerator:
                 return False
 
             # 动态导入 pyppeteer
-            import os
-            import sys
-
             import pyppeteer
             from pyppeteer import launch
+            import sys
+            import os
 
             # 尝试启动浏览器，如果 Chromium 不存在会自动下载
             logger.info("启动浏览器进行 PDF 转换")

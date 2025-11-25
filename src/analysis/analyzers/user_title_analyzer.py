@@ -4,10 +4,9 @@
 """
 
 from astrbot.api import logger
-
-from ...models.data_models import TokenUsage, UserTitle
-from ..utils.json_utils import extract_user_titles_with_regex
+from ...models.data_models import UserTitle, TokenUsage
 from .base_analyzer import BaseAnalyzer
+from ..utils.json_utils import extract_user_titles_with_regex
 
 
 class UserTitleAnalyzer(BaseAnalyzer):

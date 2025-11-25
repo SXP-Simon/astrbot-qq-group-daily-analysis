@@ -4,7 +4,6 @@ Bot实例管理模块
 """
 
 from typing import Any
-
 from astrbot.api import logger
 
 
@@ -56,7 +55,7 @@ class BotManager:
             # 如果只有一个实例，直接返回
             if len(self._bot_instances) == 1:
                 return list(self._bot_instances.values())[0]
-
+            
             # 如果有多个实例，必须指定 platform_id
             logger.error(
                 f"存在多个Bot实例 {list(self._bot_instances.keys())} 但未指定 platform_id，"
@@ -146,10 +145,7 @@ class BotManager:
     def update_from_event(self, event):
         """从事件更新bot实例（用于手动命令）"""
         # 检查是否为 QQ 平台事件
-        if (
-            hasattr(event, "get_platform_name")
-            and event.get_platform_name() != "aiocqhttp"
-        ):
+        if hasattr(event, "get_platform_name") and event.get_platform_name() != "aiocqhttp":
             return False
 
         if hasattr(event, "bot") and event.bot:

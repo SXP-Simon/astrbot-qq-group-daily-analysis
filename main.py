@@ -7,23 +7,23 @@ QQ群日常分析插件
 
 import asyncio
 
-from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star
-from astrbot.core.message.components import File
+from astrbot.api import logger, AstrBotConfig
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
+from astrbot.core.message.components import File
 from astrbot.core.star.filter.permission import PermissionType
-
-from .src.core.bot_manager import BotManager
 
 # 导入重构后的模块
 from .src.core.config import ConfigManager
+from .src.core.bot_manager import BotManager
 from .src.reports.generators import ReportGenerator
 from .src.scheduler.auto_scheduler import AutoScheduler
-from .src.utils.helpers import MessageAnalyzer
 from .src.utils.pdf_utils import PDFInstaller
+from .src.utils.helpers import MessageAnalyzer
+
 
 # 全局变量
 config_manager = None

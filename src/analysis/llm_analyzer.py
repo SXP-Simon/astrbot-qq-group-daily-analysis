@@ -4,15 +4,13 @@ LLM分析器模块
 """
 
 import asyncio
-
 from astrbot.api import logger
-
-from ..models.data_models import GoldenQuote, SummaryTopic, TokenUsage, UserTitle
-from .analyzers.golden_quote_analyzer import GoldenQuoteAnalyzer
+from ..models.data_models import SummaryTopic, UserTitle, GoldenQuote, TokenUsage
 from .analyzers.topic_analyzer import TopicAnalyzer
 from .analyzers.user_title_analyzer import UserTitleAnalyzer
-from .utils.json_utils import fix_json
+from .analyzers.golden_quote_analyzer import GoldenQuoteAnalyzer
 from .utils.llm_utils import call_provider_with_retry
+from .utils.json_utils import fix_json
 
 
 class LLMAnalyzer:
