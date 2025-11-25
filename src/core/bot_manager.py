@@ -5,7 +5,6 @@ Bot实例管理模块
 
 from typing import Any
 from astrbot.api import logger
-from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import AiocqhttpAdapter
 
 
 class BotManager:
@@ -97,7 +96,7 @@ class BotManager:
 
         for platform in platforms:
             # 严格过滤：只处理 AiocqhttpAdapter (QQ)
-            if not isinstance(platform, AiocqhttpAdapter):
+            if platform.metadata.name != "aiocqhttp":
                 continue
 
             # 获取bot实例
